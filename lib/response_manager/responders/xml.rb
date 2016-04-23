@@ -15,14 +15,53 @@ module ResponseManager
 
       def error(code, info = {})
         if ResponseManager.configuration.error_codes[code]
-          render text: "XML Error" unless performed?
+          render ResponseManager::Respondes::XML.error_response(code, ResponseManager.configuration.error_codes[code], info) unless performed?
         end
       end
 
       def success(data, code, meta = {})
         if ResponseManager.configuration.success_codes[code]
-          render text: "XML Success" unless performed?
+          render ResponseManager::Respondes::XML.success_response(code, ResponseManager.configuration.success_codes[code], data, meta) unless performed?
         end
+      end
+
+      def self.error_response(code, error, others = {})
+        if others.is_a?(Exception) and Rails.env.development?
+            others = {
+              :info => {
+                class: "#{others.class.name}",
+                message: "#{others.message}",
+                trace: others.backtrace[0,10]
+              }
+            }
+        end
+
+        response = {
+          type:         "error",
+          code:         code.to_i,
+        }
+
+        response.merge!(error){ |key, v1, v2| v1 }
+        response.merge!(others){ |key, v1, v2| v2 }
+
+        self.response(response, code)
+      end
+
+      def self.success_response(code, success, data, others = {})
+        response = {
+          type:         data.class.to_s.gsub("ActiveRecord_Relation", "Array"),
+          code:         code.to_i,
+          data:         data
+        }
+        response.merge!(success){ |key, v1, v2| v1 }
+        response.merge!(others){ |key, v1, v2| v2 }
+
+        self.response(response, code)
+      end
+
+      def self.response(hsh = {}, status = 200)
+        puts hsh.to_xml.inspect.yellow
+        return :xml => hsh, status: status, root: 'xml'
       end
     end
   end

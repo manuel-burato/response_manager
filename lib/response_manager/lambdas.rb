@@ -1,15 +1,15 @@
 module ResponseManager
   module Lambdas
-    def is_html? response
+    def self.is_html? request
       request.content_type == "text/html"
     end
-    def is_json? response
+    def self.is_json? request
       request.content_type == "application/json"
     end
-    def is_xml? response
+    def self.is_xml? request
       request.content_type == "application/xml"
     end
-    def is_text? response
+    def self.is_text? request
       request.content_type == "text/plain"
     end
   end

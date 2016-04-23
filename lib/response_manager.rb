@@ -44,7 +44,7 @@ module ResponseManager
       unless loader_controller.responder.is_a?(Responder)
         if self.configuration.available_responder_types[default][:enabled]
           loader_controller.include ResponseManager
-          loader_controller.responder = Responder.new sym
+          loader_controller.responder = Responder.new default
           loader_controller.responder.set_defaults loader_controller
         end
       end
@@ -83,6 +83,7 @@ module ResponseManager
         if ResponseManager::Lambdas.respond_to?(condition)
           ResponseManager::Lambdas.send(condition, request)
         else
+          puts "function #{condition} does not exist" 
           false
         end
       else

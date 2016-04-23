@@ -1,14 +1,6 @@
 module ResponseManager
   module Respondes
     module HTML
-      def self.get_methods
-        {
-          "error" => instance_method(:error),
-          "success" => instance_method(:success),
-          "controller_std" => instance_method(:controller_std)
-        }
-      end
-
       def controller_std
 
       end

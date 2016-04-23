@@ -1,16 +1,8 @@
 module ResponseManager
   module Respondes
     module XML
-      def self.get_methods
-        {
-          "error" => instance_method(:error),
-          "success" => instance_method(:success),
-          "controller_std" => instance_method(:controller_std)
-        }
-      end
-
       def controller_std
-        layout false
+
       end
 
       def error(code, info = {})
@@ -19,7 +11,7 @@ module ResponseManager
         end
       end
 
-      def success(data, code, meta = {})
+      def success(data = {}, code = 200, meta = {})
         if ResponseManager.configuration.success_codes[code]
           render ResponseManager::Respondes::XML.success_response(code, ResponseManager.configuration.success_codes[code], data, meta) unless performed?
         end
@@ -49,7 +41,7 @@ module ResponseManager
 
       def self.success_response(code, success, data, others = {})
         response = {
-          type:         data.class.to_s.gsub("ActiveRecord_Relation", "Array"),
+          type:         data.class.to_s.gsub("ActiveRecord_Relation", "Array").html_safe,
           code:         code.to_i,
           data:         data
         }
@@ -60,7 +52,6 @@ module ResponseManager
       end
 
       def self.response(hsh = {}, status = 200)
-        puts hsh.to_xml.inspect.yellow
         return :xml => hsh, status: status, root: 'xml'
       end
     end

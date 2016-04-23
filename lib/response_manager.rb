@@ -12,11 +12,11 @@ module ResponseManager
   extend ActiveSupport::Concern
 
   def error *a
-    self.responder.error(self, *a)
+    self.responder.error *a
   end
 
   def success *a
-    self.responder.success(self, *a)
+    self.responder.success *a
   end
 
   def self.load request
@@ -38,7 +38,7 @@ module ResponseManager
       default = target_controller::Default_content_type
 
       self.configuration.available_responder_types.each do |key,val|
-        break if self.run(key, target_controller, loader_controller, request)
+        break if self.run(key, target_controller_instance, loader_controller, request)
       end
 
       unless loader_controller.responder.is_a?(Responder)
@@ -48,8 +48,7 @@ module ResponseManager
 
         if self.configuration.available_responder_types[default][:enabled]
           loader_controller.include ResponseManager
-          loader_controller.responder = Responder.new default
-          loader_controller.responder.set_defaults loader_controller
+          loader_controller.responder = Responder.new default, target_controller_instance
         end
       end
 
@@ -59,16 +58,15 @@ module ResponseManager
     end
   end
 
-  def self.run(sym, target_controller, loader_controller, request)
-    accepted = target_controller::Accepted_content_types
-    default = target_controller::Default_content_type
+  def self.run(sym, target_controller_instance, loader_controller, request)
+    accepted = target_controller_instance.class::Accepted_content_types
+    default = target_controller_instance.class::Default_content_type
 
     val = self.configuration.available_responder_types[sym]
     if accepted.include?(sym) and val[:enabled]
       if self.test_condition(val[:conditions], request)
         loader_controller.include ResponseManager
-        loader_controller.responder = Responder.new sym
-        loader_controller.responder.set_defaults loader_controller
+        loader_controller.responder = Responder.new sym, target_controller_instance
         return true
       end
     end

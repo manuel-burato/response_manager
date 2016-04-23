@@ -1,12 +1,12 @@
 require 'response_manager/version'
 require 'response_manager/configuration'
 require 'response_manager/error_handler'
-require 'response_manager/json'
-require 'response_manager/html'
+require 'response_manager/lambdas'
 require 'response_manager/responder'
-require 'response_manager/text'
-require 'response_manager/xml'
-require 'json'
+require 'response_manager/responders/json'
+require 'response_manager/responders/html'
+require 'response_manager/responders/text'
+require 'response_manager/responders/xml'
 
 module ResponseManager
   extend ActiveSupport::Concern
@@ -35,31 +35,59 @@ module ResponseManager
     # TODO: da verificare se questo controllo sia veramente necessario
     if target_controller.ancestors.include?(loader_controller)
       loader_controller.responder = nil
-      accepted = target_controller::Accepted_content_types
       default = target_controller::Default_content_type
 
       self.configuration.available_responder_types.each do |key,val|
-        if val[:content_types].include?(request.content_type) and accepted.include?(key)
-          self.run(key, loader_controller)
-        end
+        break if self.run(key, target_controller, loader_controller, request)
       end
 
       unless loader_controller.responder.is_a?(Responder)
-        self.run(default, loader_controller)
+        if self.configuration.available_responder_types[default][:enabled]
+          loader_controller.include ResponseManager
+          loader_controller.responder = Responder.new sym
+          loader_controller.responder.set_defaults loader_controller
+        end
       end
+
+      self.raise_custom "There's no available responder types for #{target_controller}" unless loader_controller.responder.is_a?(Responder)
     else
       self.raise_custom "The #{controller.name} is not a child of #{loader_controller}"
     end
   end
 
-  def self.run(sym, loader_controller)
-    loader_controller.include ResponseManager
-    loader_controller.responder = Responder.new sym
-    loader_controller.responder.set_defaults loader_controller
+  def self.run(sym, target_controller, loader_controller, request)
+    accepted = target_controller::Accepted_content_types
+    default = target_controller::Default_content_type
+
+    val = self.configuration.available_responder_types[sym]
+    if accepted.include?(sym) and val[:enabled]
+      if self.test_condition(val[:conditions], request)
+        loader_controller.include ResponseManager
+        loader_controller.responder = Responder.new sym
+        loader_controller.responder.set_defaults loader_controller
+        return true
+      end
+    end
+    return false
   end
 
   def self.raise_custom exception
     raise exception
+  end
+
+  def self.test_condition(condition, request)
+    case condition
+      when Proc
+        condition.call(request)
+      when Symbol
+        if ResponseManager::Lambdas.respond_to?(condition)
+          ResponseManager::Lambdas.send(condition, request)
+        else
+          false
+        end
+      else
+        false
+    end
   end
 
   def self.controller_is_excluded? controller

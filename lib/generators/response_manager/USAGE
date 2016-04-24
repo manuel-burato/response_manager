@@ -1,0 +1,8 @@
+Description:
+    This generator create init files form ResponseManager
+
+Example:
+    rails generate ResponseManager EntryControllerName
+
+This will create or modify:
+    config/initilizer/response_manager.rb

@@ -1,6 +1,8 @@
 module ResponseManager
   module Respondes
     module XML
+      Content_type = "application/xml"
+
       def controller_std
 
       end

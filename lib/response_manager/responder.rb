@@ -15,8 +15,14 @@ module ResponseManager
           }
         end
       end
-      self.methods = manager.get_methods
+      self.methods = self.manager.get_methods
       self.methods['controller_std'].bind(self.target_controller).call
+
+      if defined? self.manager::Content_type
+        target_controller.class_eval "before_action do |controller|
+          self.content_type = '#{self.manager::Content_type}'
+        end"
+      end
     end
 
     def is_json?

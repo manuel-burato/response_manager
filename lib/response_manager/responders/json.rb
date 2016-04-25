@@ -1,6 +1,8 @@
 module ResponseManager
   module Respondes
     module JSON
+      Content_type = "application/json"
+
       def controller_std
       end
 

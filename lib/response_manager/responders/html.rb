@@ -1,6 +1,9 @@
 module ResponseManager
   module Respondes
     module HTML
+      Content_type = "text/html"
+
+
       def controller_std
 
       end

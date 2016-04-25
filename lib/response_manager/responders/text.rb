@@ -1,6 +1,8 @@
 module ResponseManager
   module Respondes
     module TEXT
+      Content_type = "text/plain"
+
       def controller_std
 
       end

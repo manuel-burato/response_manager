@@ -1,5 +1,5 @@
 module ResponseManager
-  class Responder
+  class Responsinator
     attr_accessor :type, :manager, :methods, :target_controller
 
     def initialize(type, target_controller)
@@ -19,8 +19,8 @@ module ResponseManager
       self.methods['controller_std'].bind(self.target_controller).call
 
       if defined? self.manager::Content_type
-        target_controller.class_eval "before_action do |controller|
-          self.content_type = '#{self.manager::Content_type}'
+        target_controller.class_eval "after_action do |controller|
+          controller.content_type = '#{self.manager::Content_type}'
         end"
       end
     end

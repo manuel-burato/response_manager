@@ -4,8 +4,8 @@ module ResponseManager
 
     included do
       rescue_from ActionView::MissingTemplate do |exception|
-        raise exception if !self.responder
-        if self.responder.in? :json, :xml
+        raise exception if !self.responsinator
+        if self.responsinator.in? :json, :xml
           success(nil, 200, { type:"NoResponse",data:nil })
         else
           raise exception

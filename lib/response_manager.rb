@@ -2,7 +2,7 @@ require 'response_manager/version'
 require 'response_manager/configuration'
 require 'response_manager/error_handler'
 require 'response_manager/lambdas'
-require 'response_manager/responder'
+require 'response_manager/responsinator'
 require 'response_manager/responders/json'
 require 'response_manager/responders/html'
 require 'response_manager/responders/text'
@@ -12,11 +12,11 @@ module ResponseManager
   extend ActiveSupport::Concern
 
   def error *a
-    self.responder.error *a
+    self.responsinator.error *a
   end
 
   def success *a
-    self.responder.success *a
+    self.responsinator.success *a
   end
 
   def self.load request
@@ -34,25 +34,25 @@ module ResponseManager
 
     # TODO: da verificare se questo controllo sia veramente necessario
     if target_controller.ancestors.include?(loader_controller)
-      loader_controller.responder = nil
+      loader_controller.include ResponseManager
+      loader_controller.responsinator = nil
       default = target_controller::Default_content_type
 
       self.configuration.available_responder_types.each do |key,val|
         break if self.run(key, target_controller_instance, loader_controller, request)
       end
 
-      unless loader_controller.responder.is_a?(Responder)
+      unless loader_controller.responsinator.is_a?(Responsinator)
         if !self.configuration.available_responder_types[default][:enabled]
           default = self.configuration.global_default_responder_type
         end
 
         if self.configuration.available_responder_types[default][:enabled]
-          loader_controller.include ResponseManager
-          loader_controller.responder = Responder.new default, target_controller_instance
+          loader_controller.responsinator = Responsinator.new default, target_controller_instance
         end
       end
 
-      self.raise_custom "There's no available responder types for #{target_controller}" unless loader_controller.responder.is_a?(Responder)
+      self.raise_custom "There's no available responder types for #{target_controller}" unless loader_controller.responsinator.is_a?(Responsinator)
     else
       self.raise_custom "The #{controller.name} is not a child of #{loader_controller}"
     end
@@ -65,8 +65,7 @@ module ResponseManager
     val = self.configuration.available_responder_types[sym]
     if accepted.include?(sym) and val[:enabled]
       if self.test_condition(val[:conditions], request)
-        loader_controller.include ResponseManager
-        loader_controller.responder = Responder.new sym, target_controller_instance
+        loader_controller.responsinator = Responsinator.new sym, target_controller_instance
         return true
       end
     end
@@ -105,7 +104,7 @@ module ResponseManager
 
   included do
     include ErrorHandler
-    class_attribute :responder
+    class_attribute :responsinator
   end
 
   class << self

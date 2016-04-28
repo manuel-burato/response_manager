@@ -30,7 +30,6 @@ module ResponseManager
     loader_controller = caller_locations(1,1)[0].base_label.gsub(/[<>]/, '').gsub('class:','').constantize rescue nil
 
     self.raise_custom "Error detecting loader controller" unless loader_controller
-    self.raise_custom "Controller #{loader_controller.name} not enabled to load ResponseManager" unless self.configuration.controller_entry_points.include? loader_controller.name
 
     # TODO: da verificare se questo controllo sia veramente necessario
     if target_controller.ancestors.include?(loader_controller)

@@ -21,11 +21,9 @@ module ResponseManager
       def self.error_response(code, error, others = {})
         if others.is_a?(Exception) and Rails.env.development?
             others = {
-              :info => {
-                class: "#{others.class.name}",
-                message: "#{others.message}",
-                trace: others.backtrace[0,10]
-              }
+              class: "#{others.class.name}",
+              message: "#{others.message}",
+              trace: others.backtrace[0,10]
             }
         end
 
@@ -34,7 +32,7 @@ module ResponseManager
           code:         code.to_i,
         }
 
-        response.merge!(error){ |key, v1, v2| v1 }
+        response.merge!(error_info: others){ |key, v1, v2| v1 }
         response.merge!(others){ |key, v1, v2| v2 }
 
         self.response(response, code)
